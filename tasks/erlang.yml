@@ -1,0 +1,47 @@
+---
+
+- name: Check kerl installation
+  command: "which kerl"
+  ignore_errors: True
+  register: kerl_check
+
+- name: get kerl
+  sudo: True
+  get_url: url={{kerl_bin_github_url}} dest={{kerl_bin}} mode=0777
+  when: kerl_check.rc == 1
+
+- name: put .kerlrc
+  template: src=kerlrc dest={{ansible_env['HOME']}}/.kerlrc owner={{ansible_env['USER']}} mode=0744
+  when: kerl_check.rc == 1
+
+- name: remove otp_builds for kerl cleanup command
+  file: path={{ansible_env['HOME']}}/.kerl/otp_builds state=absent
+  when: kerl_check.rc == 1
+
+- name: remove otp_installations for kerl cleanup command
+  file: path={{ansible_env['HOME']}}/.kerl/otp_installations state=absent
+  when: kerl_check.rc == 1
+
+- name: update erlang releases
+  sudo: True
+  command: "{{kerl_bin}} update releases"
+  when: kerl_check.rc == 1
+
+- name: Check Erlang release installation
+  stat: path={{erlang_install_dir}}/{{erlang_version}}
+  register: erlang_release_check
+
+- name: build erlang
+  sudo: True
+  command: "{{kerl_bin}} build {{erlang_version}} {{erlang_version}} creates={{erlang_build_dir}}/{{erlang_version}}"
+  when: erlang_release_check.stat.exists == False
+
+- name: install erlang
+  sudo: True
+  command: "{{kerl_bin}} install {{erlang_version}} {{erlang_install_dir}}/{{erlang_version}} creates={{erlang_install_dir}}/{{erlang_version}}"
+  when: erlang_release_check.stat.exists == False
+
+- name: put activate erlang file
+  sudo: True
+  template: src=kerl.sh dest={{profile_dir}}/kerl.sh
+

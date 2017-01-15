@@ -1,0 +1,30 @@
+---
+
+- name: Check kiex installation
+  stat: path={{ansible_env.HOME}}/.kiex
+  register: kiex_install_check
+
+- name: Download kiex installation
+  git: repo={{kiex_github_url}} dest={{kiex_download_dir}} version={{kiex_version}}
+  when: kiex_install_check.stat.exists == False
+
+- name: Run kiex installation
+  command: "{{kiex_download_dir}}/install"
+  when: kiex_install_check.stat.exists == False
+
+- name: Put kiex activation file
+  sudo: True
+  template: src=kiex.sh dest={{profile_dir}}/kiex.sh
+
+- name: Check Elixir installation
+  command: "{{kiex_bin}} list"
+  register: elixir_install_check
+
+- name: Install Elixir
+  command: "{{kiex_bin}} install {{elixir_version}}"
+  environment:
+    PATH: "{{ansible_env.PATH}}:{{erlang_install_dir}}/{{erlang_version}}/bin"
+  when: elixir_install_check.stdout.find("elixir-{{elixir_version}}") == False
+
+- name: Set default Elixir version
+  command: "{{kiex_bin}} use {{elixir_version}} --default"
