@@ -42,3 +42,4 @@ Author Information
 ------------------
 
 Sergey Gernyak
+ohr486 (actually a big part of code is taken from this [repo](https://github.com/ohr486/ansible-elixir))
