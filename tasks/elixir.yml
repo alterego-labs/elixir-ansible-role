@@ -17,14 +17,15 @@
   template: src=kiex.sh dest={{profile_dir}}/kiex.sh
 
 - name: Check Elixir installation
-  command: "{{kiex_bin}} list"
+  shell: "{{kiex_bin}} list | grep elixir-{{elixir_version}}"
+  failed_when: False
   register: elixir_install_check
 
 - name: Install Elixir
   command: "{{kiex_bin}} install {{elixir_version}}"
   environment:
     PATH: "{{ansible_env.PATH}}:{{erlang_install_dir}}/{{erlang_version}}/bin"
-  when: elixir_install_check.stdout.find("elixir-{{elixir_version}}") == False
+  when: elixir_install_check.stdout == ""
 
 - name: Set default Elixir version
   command: "{{kiex_bin}} use {{elixir_version}} --default"
